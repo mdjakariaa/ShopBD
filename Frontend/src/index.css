@@ -1,0 +1,138 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=Prata&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: 'Outfit', Arial, Helvetica, sans-serif;
+  color: #27231f;
+  background: #fbf8f2;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --canvas: #fbf8f2;
+  --canvas-deep: #f4eee4;
+  --surface: #fffdf9;
+  --surface-soft: #f7f1e8;
+  --ink: #27231f;
+  --muted: #746f66;
+  --line: #e6ddd0;
+  --accent: #2d2925;
+  --accent-warm: #9b735e;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 8% 4%, rgba(244, 229, 207, 0.58), transparent 31rem),
+    radial-gradient(circle at 94% 16%, rgba(238, 219, 211, 0.38), transparent 27rem),
+    linear-gradient(180deg, #fffdf9 0%, #fbf8f2 38%, #f8f3eb 100%);
+  background-attachment: fixed;
+}
+button, input, select, textarea { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; }
+img { display: block; max-width: 100%; }
+::selection { background: #eadfd1; color: #27231f; }
+
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 2px solid #8b6b58;
+  outline-offset: 3px;
+}
+
+.page-container {
+  width: min(100% - 40px, 1640px);
+  margin-inline: auto;
+}
+
+@media (max-width: 640px) {
+  .page-container { width: min(100% - 32px, 680px); }
+}
+
+.section-rule-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-transform: uppercase;
+  font-size: 29px;
+  font-weight: 300;
+  letter-spacing: 0.025em;
+  color: #7c746a;
+}
+.section-rule-title strong { color: #2d2925; font-weight: 600; }
+.section-rule-title::after {
+  content: '';
+  width: 46px;
+  height: 2px;
+  background: linear-gradient(90deg, #2d2925, #a98c78);
+  border-radius: 999px;
+  margin-top: 2px;
+}
+
+@media (max-width: 640px) {
+  .section-rule-title { font-size: 16px; gap: 8px; }
+  .section-rule-title::after { width: 34px; height: 1px; }
+}
+
+@layer components {
+  .premium-surface {
+    @apply border border-line/90 bg-ivory/90 shadow-soft;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-xl bg-espresso px-8 text-white shadow-soft transition duration-300 ease-out hover:-translate-y-0.5 hover:bg-black hover:shadow-lift active:translate-y-0 active:scale-[0.99] disabled:cursor-not-allowed disabled:translate-y-0 disabled:bg-[#aaa] disabled:shadow-none;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-xl border border-[#cfc2b2] bg-ivory/90 text-ink transition duration-300 ease-out hover:-translate-y-0.5 hover:border-[#8f7b6c] hover:bg-white hover:shadow-soft active:translate-y-0;
+  }
+
+  .field {
+    @apply rounded-xl border border-[#d8cfc2] bg-ivory/90 text-ink shadow-[0_1px_0_rgba(255,255,255,0.7)_inset] outline-none transition duration-200 placeholder:text-[#9b948b] hover:border-[#c4b5a4] focus:border-[#8d7362] focus:ring-4 focus:ring-[#b79a861f];
+  }
+
+  .icon-button {
+    @apply rounded-full p-2 transition duration-300 ease-out hover:-translate-y-0.5 hover:bg-[#f2eadf] hover:shadow-sm active:translate-y-0 active:scale-95;
+  }
+
+  .soft-divider {
+    border-color: var(--line);
+  }
+
+  .link-underline {
+    @apply relative transition-colors duration-300 hover:text-black;
+  }
+  .link-underline::after {
+    content: '';
+    @apply absolute -bottom-1 left-0 h-px w-0 bg-espresso transition-all duration-300;
+  }
+  .link-underline:hover::after,
+  .link-underline:focus-visible::after { width: 100%; }
+
+  .animate-enter {
+    animation: fade-up 0.65s cubic-bezier(.22,.8,.3,1) both;
+  }
+
+  .animate-enter-delay {
+    animation: fade-up 0.7s 0.08s cubic-bezier(.22,.8,.3,1) both;
+  }
+}
+
+.fade-in { animation: fade .2s ease-out; }
+@keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fade-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
