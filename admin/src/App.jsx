@@ -5,14 +5,19 @@ import ListItems from './pages/ListItems'
 import Orders from './pages/Orders'
 import Login from './pages/Login'
 import { useState } from 'react'
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+export const backendUrl = import.meta.env.VITE_BACKEND_URL
 
 function App() {
   const [token, setToken] = useState("");
   return (
     <div className="App">
+      <ToastContainer />
       {token === "" 
       ? 
-        <Login />
+        <Login setToken={setToken} />
       : <>
       <Routes>
           <Route element={<Layout />}>

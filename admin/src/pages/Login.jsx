@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { backendUrl } from "../App";
 
-const Login = () => {
+const Login = ({ setToken }) => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -16,12 +18,21 @@ const Login = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e) => {
+    try {
+      e.preventDefault(); // Prevent the default form submission behavior
+      const response = await axios.post(backendUrl + '/api/user/admin', {email: formData.email, password: formData.password});
+      if(response.data.success){
+        setToken(response.data.token);
+      }else{
+        toast.error(response.data.message);
+      }
 
-    // Temporary frontend login
-    // Replace this later with your real authentication API.
-    navigate("/add");
+    }catch (error) {
+      console.log("error", error);
+      toast.error(error.message);
+
+    }   
   };
 
   return (
