@@ -7,11 +7,20 @@ import Login from './pages/Login'
 import { useState } from 'react'
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useEffect } from 'react';
 
 export const backendUrl = import.meta.env.VITE_BACKEND_URL
 
 function App() {
-  const [token, setToken] = useState("");
+const [token, setToken] = useState(
+  localStorage.getItem("token") ? localStorage.getItem("token") : "",
+);
+
+// Store the token in localStorage whenever it changes
+useEffect(() => {
+  localStorage.setItem("token", token);
+}, [token]);
+
   return (
     <div className="App">
       <ToastContainer />
