@@ -6,7 +6,7 @@ function Navbar() {
       <img
         className="block w-[max(10%,80px)] select-none"
         src={assets.logo}
-        alt="FOREVER Admin Panel"
+        alt="Admin Panel"
         draggable="false"
       />
 
