@@ -28,12 +28,13 @@ useEffect(() => {
       ? 
         <Login setToken={setToken} />
       : <>
-      <Routes>
-          <Route element={<Layout />}>
+        <Layout setToken={setToken} /> // Pass the setToken function as a prop to the Layout component
+        <Routes>
+          <Route element={<Layout setToken={setToken} />}>
             <Route index element={<Navigate to="/add" replace />} />
-            <Route path="/add" element={<AddItems />} />
-            <Route path="/list" element={<ListItems />} />
-            <Route path="/orders" element={<Orders />} />
+            <Route path="/add" element={<AddItems token={token} />} /> //passing token as a prop to AddItems component
+            <Route path="/list" element={<ListItems token={token} />} /> //passing token as a prop to ListItems component
+            <Route path="/orders" element={<Orders token={token} />} /> //passing token as a prop to Orders component
             <Route path="*" element={<Navigate to="/add" replace />} />
           </Route>
         </Routes>

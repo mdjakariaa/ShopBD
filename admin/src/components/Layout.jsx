@@ -2,10 +2,10 @@ import { Outlet } from 'react-router-dom'
 import Navbar from './Navbar'
 import Sidebar from './Sidebar'
 
-function Layout() {
+function Layout({ setToken }) {
   return (
     <div className="flex min-h-screen flex-col overflow-hidden bg-[#f7fcf8]">
-      <Navbar />
+      <Navbar setToken={setToken} /> 
 
       <div className="flex min-h-0 flex-1">
         <Sidebar />
