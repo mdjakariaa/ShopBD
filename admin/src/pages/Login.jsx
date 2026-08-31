@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { toast } from "react-toastify";
 import { backendUrl } from "../App";
 
 const Login = ({ setToken }) => {
-  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     email: "",

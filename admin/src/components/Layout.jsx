@@ -4,12 +4,12 @@ import Sidebar from './Sidebar'
 
 function Layout({ setToken }) {
   return (
-    <div className="flex min-h-screen flex-col overflow-hidden bg-[#f7fcf8]">
+    <div className="flex min-h-screen flex-col bg-[#f7fcf8]">
       <Navbar setToken={setToken} /> 
 
       <div className="flex min-h-0 flex-1">
         <Sidebar />
-        <main className="min-w-0 flex-1 bg-[#f7fcf8]">
+        <main className="min-w-0 flex-1 bg-[#eff2f0fa] p-4 md:p-8 overflow-y-auto">
           <Outlet />
         </main>
       </div>
