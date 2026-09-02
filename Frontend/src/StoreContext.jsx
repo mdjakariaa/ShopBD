@@ -8,6 +8,7 @@ export const currency = '$'
 
 export function StoreProvider({ children }) {
   const [products, setProducts] = useState([])
+  const [token, setToken] = useState(() => localStorage.getItem('token') || '')
   const [cart, setCart] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('forever-cart'))
@@ -35,8 +36,21 @@ export function StoreProvider({ children }) {
   }, [])
 
   useEffect(() => {
+    if (token) {
+      localStorage.setItem('token', token)
+    } else {
+      localStorage.removeItem('token')
+    }
+  }, [token])
+
+  useEffect(() => {
     localStorage.setItem('forever-cart', JSON.stringify(cart))
   }, [cart])
+
+  const logout = () => {
+    setToken('')
+    localStorage.removeItem('token')
+  }
 
   const addToCart = (productId, size = 'L', quantity = 1) => {
     setCart((current) => [
@@ -82,6 +96,9 @@ export function StoreProvider({ children }) {
         products,
         currency,
         backendUrl,
+        token,
+        setToken,
+        logout,
         cartItems,
         cartCount,
         subtotal,

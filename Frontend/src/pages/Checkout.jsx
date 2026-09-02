@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import Layout from '../components/Layout'
 import CartTotals from '../components/CartTotals'
 import stripeLogo from '../assets/stripe_logo.png'
@@ -13,13 +14,19 @@ const fields = [
 
 export default function Checkout() {
   const navigate = useNavigate()
-  const { cartItems, setCart } = useStore()
+  const { cartItems, setCart, token } = useStore()
   const [payment, setPayment] = useState('razorpay')
   const [form, setForm] = useState({})
 
   const submit = (event) => {
     event.preventDefault()
     if (!cartItems.length) return
+
+    if (!token) {
+      toast.info('Please sign in to place an order')
+      navigate('/login')
+      return
+    }
 
     const newOrders = cartItems.map((item) => ({
       id: `${item.productId}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
