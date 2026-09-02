@@ -20,6 +20,24 @@ export default function Checkout() {
   const submit = (event) => {
     event.preventDefault()
     if (!cartItems.length) return
+
+    const newOrders = cartItems.map((item) => ({
+      id: `${item.productId}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      product: item.product,
+      size: item.size,
+      quantity: item.quantity,
+      paymentMethod: payment,
+      status: 'Order Placed',
+      date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+    }))
+
+    try {
+      const existing = JSON.parse(localStorage.getItem('forever-orders')) || []
+      localStorage.setItem('forever-orders', JSON.stringify([...newOrders, ...existing]))
+    } catch {
+      // ignore
+    }
+
     setCart([])
     navigate('/orders')
   }

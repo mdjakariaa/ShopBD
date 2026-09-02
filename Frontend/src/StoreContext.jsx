@@ -1,20 +1,38 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import { products } from './data/products'
+import axios from 'axios'
 
 const StoreContext = createContext(null)
 
+export const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'
+export const currency = '$'
+
 export function StoreProvider({ children }) {
+  const [products, setProducts] = useState([])
   const [cart, setCart] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('forever-cart'))
-      return saved || [
-        { lineId: 'demo-1', productId: 12, size: 'L', quantity: 1 },
-        { lineId: 'demo-2', productId: 12, size: 'L', quantity: 1 },
-      ]
+      return Array.isArray(saved) ? saved : []
     } catch {
       return []
     }
   })
+
+  const getProductsData = async () => {
+    try {
+      const response = await axios.get(`${backendUrl}/api/product/list`)
+      if (response.data.success) {
+        setProducts(response.data.products)
+      } else {
+        console.error(response.data.message)
+      }
+    } catch (error) {
+      console.error('Failed to fetch products:', error.message)
+    }
+  }
+
+  useEffect(() => {
+    getProductsData()
+  }, [])
 
   useEffect(() => {
     localStorage.setItem('forever-cart', JSON.stringify(cart))
@@ -43,19 +61,36 @@ export function StoreProvider({ children }) {
 
   const cartItems = useMemo(
     () =>
-      cart.map((item) => ({
-        ...item,
-        product: products.find((product) => product.id === item.productId),
-      })),
-    [cart],
+      cart
+        .map((item) => ({
+          ...item,
+          product: products.find((product) => (product._id || product.id) === item.productId),
+        }))
+        .filter((item) => Boolean(item.product)),
+    [cart, products],
   )
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0)
-  const subtotal = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0)
+  const subtotal = cartItems.reduce(
+    (sum, item) => sum + (item.product?.price || 0) * item.quantity,
+    0,
+  )
 
   return (
     <StoreContext.Provider
-      value={{ products, cartItems, cartCount, subtotal, addToCart, removeFromCart, updateQuantity, setCart }}
+      value={{
+        products,
+        currency,
+        backendUrl,
+        cartItems,
+        cartCount,
+        subtotal,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        setCart,
+        getProductsData,
+      }}
     >
       {children}
     </StoreContext.Provider>

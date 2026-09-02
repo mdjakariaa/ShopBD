@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
 import SectionTitle from '../components/SectionTitle'
@@ -5,12 +6,11 @@ import ProductCard from '../components/ProductCard'
 import ServiceHighlights from '../components/ServiceHighlights'
 import Newsletter from '../components/Newsletter'
 import headerImage from '../assets/header_img.png'
-import { bestSellerIds, latestIds } from '../data/products'
 import { useStore } from '../StoreContext'
 
-function ProductSection({ titleFirst, titleStrong, ids, best = false, mobileSix = false }) {
-  const { products } = useStore()
-  const cards = ids.map((id) => products.find((p) => p.id === id)).filter(Boolean)
+function ProductSection({ titleFirst, titleStrong, productsList = [], best = false, mobileSix = false }) {
+  if (!productsList.length) return null
+
   return (
     <section className="animate-enter pt-20 sm:pt-24 lg:pt-28">
       <SectionTitle first={titleFirst} strong={titleStrong} />
@@ -18,8 +18,11 @@ function ProductSection({ titleFirst, titleStrong, ids, best = false, mobileSix 
         Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the.
       </p>
       <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 lg:mt-10 lg:grid-cols-5 lg:gap-x-7 lg:gap-y-9">
-        {cards.map((product, index) => (
-          <div key={product.id} className={`${best && index === 4 ? 'hidden lg:block' : ''} ${mobileSix && index >= 6 ? 'hidden lg:block' : ''}`}>
+        {productsList.map((product, index) => (
+          <div
+            key={product._id || product.id}
+            className={`${best && index === 4 ? 'hidden lg:block' : ''} ${mobileSix && index >= 6 ? 'hidden lg:block' : ''}`}
+          >
             <ProductCard product={product} />
           </div>
         ))}
@@ -29,6 +32,18 @@ function ProductSection({ titleFirst, titleStrong, ids, best = false, mobileSix 
 }
 
 export default function Home() {
+  const { products } = useStore()
+
+  const latestProducts = useMemo(() => {
+    return [...products]
+      .sort((a, b) => (b.date || 0) - (a.date || 0))
+      .slice(0, 10)
+  }, [products])
+
+  const bestSellerProducts = useMemo(() => {
+    return products.filter((item) => item.bestseller).slice(0, 5)
+  }, [products])
+
   return (
     <Layout>
       <div className="page-container">
@@ -51,8 +66,8 @@ export default function Home() {
           </div>
         </section>
 
-        <ProductSection titleFirst="LATEST" titleStrong="COLLECTIONS" ids={latestIds} mobileSix />
-        <ProductSection titleFirst="BEST" titleStrong="SELLER" ids={bestSellerIds} best />
+        <ProductSection titleFirst="LATEST" titleStrong="COLLECTIONS" productsList={latestProducts} mobileSix />
+        <ProductSection titleFirst="BEST" titleStrong="SELLER" productsList={bestSellerProducts} best />
         <ServiceHighlights />
         <Newsletter />
       </div>

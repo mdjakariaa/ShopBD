@@ -87,7 +87,7 @@ export default function Collection() {
 
             {filtered.length ? (
               <div className="grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 lg:gap-x-7 lg:gap-y-9">
-                {filtered.map((product) => <ProductCard key={product.id} product={product} />)}
+                {filtered.map((product) => <ProductCard key={product._id || product.id} product={product} />)}
               </div>
             ) : (
               <div className="rounded-2xl border border-line bg-ivory/60 py-24 text-center text-sm text-muted">No products match your filters.</div>
