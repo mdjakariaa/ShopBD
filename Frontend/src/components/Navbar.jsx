@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import logo from '../assets/logo.png'
 import searchIcon from '../assets/search_icon.png'
 import profileIcon from '../assets/profile-icon.png'
@@ -15,7 +16,7 @@ const desktopLinks = [
 ]
 
 export default function Navbar() {
-  const { cartCount } = useStore()
+  const { cartCount, token, logout } = useStore()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
@@ -37,6 +38,21 @@ export default function Navbar() {
     navigate(trimmed ? `/collection?q=${encodeURIComponent(trimmed)}` : '/collection')
     setSearchOpen(false)
     setMenuOpen(false)
+  }
+
+  const handleLogout = () => {
+    logout()
+    toast.success('Logged out successfully')
+    setProfileOpen(false)
+    navigate('/login')
+  }
+
+  const handleProfileClick = () => {
+    if (!token) {
+      navigate('/login')
+    } else {
+      setProfileOpen((value) => !value)
+    }
   }
 
   return (
@@ -72,14 +88,31 @@ export default function Navbar() {
             </button>
 
             <div className="relative" ref={profileRef}>
-              <button onClick={() => setProfileOpen((value) => !value)} className="icon-button" aria-label="Profile menu" aria-expanded={profileOpen}>
+              <button
+                onClick={handleProfileClick}
+                className="icon-button"
+                aria-label="Profile menu"
+                aria-expanded={profileOpen}
+              >
                 <img src={profileIcon} alt="" className="h-[22px] w-[19px] object-contain sm:h-6 sm:w-6" />
               </button>
-              {profileOpen && (
+              {token && profileOpen && (
                 <div className="fade-in absolute right-0 top-12 z-50 w-[170px] overflow-hidden rounded-2xl border border-line bg-ivory py-2 text-[13px] shadow-lift">
-                  <button onClick={() => { navigate('/login'); setProfileOpen(false) }} className="block w-full px-5 py-2.5 text-left text-[#514a44] transition-colors hover:bg-cream hover:text-black">My Profile</button>
-                  <button onClick={() => { navigate('/orders'); setProfileOpen(false) }} className="block w-full px-5 py-2.5 text-left text-[#514a44] transition-colors hover:bg-cream hover:text-black">Orders</button>
-                  <button onClick={() => setProfileOpen(false)} className="block w-full px-5 py-2.5 text-left text-[#514a44] transition-colors hover:bg-cream hover:text-black">Logout</button>
+                  <button
+                    onClick={() => {
+                      navigate('/orders')
+                      setProfileOpen(false)
+                    }}
+                    className="block w-full px-5 py-2.5 text-left text-[#514a44] transition-colors hover:bg-cream hover:text-black"
+                  >
+                    Orders
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="block w-full px-5 py-2.5 text-left text-[#514a44] transition-colors hover:bg-cream hover:text-black"
+                  >
+                    Logout
+                  </button>
                 </div>
               )}
             </div>
@@ -123,6 +156,49 @@ export default function Navbar() {
               {label}<span aria-hidden="true">›</span>
             </NavLink>
           ))}
+          {token ? (
+            <>
+              <button
+                onClick={() => {
+                  setMenuOpen(false)
+                  navigate('/orders')
+                }}
+                className="flex w-full items-center justify-between border-t border-line/70 px-3 py-4 text-left text-xs text-[#514a44] transition-colors hover:bg-cream"
+              >
+                Orders<span aria-hidden="true">›</span>
+              </button>
+              <button
+                onClick={() => {
+                  setMenuOpen(false)
+                  handleLogout()
+                }}
+                className="flex w-full items-center justify-between border-t border-line/70 px-3 py-4 text-left text-xs text-[#514a44] transition-colors hover:bg-cream"
+              >
+                Logout<span aria-hidden="true">›</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => {
+                  setMenuOpen(false)
+                  navigate('/login')
+                }}
+                className="flex w-full items-center justify-between border-t border-line/70 px-3 py-4 text-left text-xs text-[#514a44] transition-colors hover:bg-cream"
+              >
+                Login<span aria-hidden="true">›</span>
+              </button>
+              <button
+                onClick={() => {
+                  setMenuOpen(false)
+                  navigate('/signup')
+                }}
+                className="flex w-full items-center justify-between border-t border-line/70 px-3 py-4 text-left text-xs text-[#514a44] transition-colors hover:bg-cream"
+              >
+                Sign Up<span aria-hidden="true">›</span>
+              </button>
+            </>
+          )}
         </div>
       )}
     </>
