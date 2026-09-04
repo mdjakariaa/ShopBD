@@ -6,6 +6,7 @@ const StoreContext = createContext(null)
 
 export const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'
 export const currency = '$'
+export const deliveryFee = 10
 
 // Helper: Convert backend cartData object { [itemId]: { [size]: quantity } } to cart array
 export const cartDataToArray = (cartData) => {
@@ -302,6 +303,7 @@ export function StoreProvider({ children }) {
         cartItems,
         cartCount,
         subtotal,
+        deliveryFee,
         addToCart,
         removeFromCart,
         updateQuantity,
