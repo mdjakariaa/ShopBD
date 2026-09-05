@@ -1,13 +1,15 @@
+import "dotenv/config";
 import orderModel from "../models/orderModel.js";
 import userModel from "../models/userModel.js";
 import Stripe from "stripe";
 
 
-//global variables
-const currency = "thb";
+// Global variables
+// Note: Currency matches the storefront ($ = USD)
+const currency = (process.env.CURRENCY || "usd").toLowerCase();
 const deliveryCharge = 10;
 
-// gateway Initialization
+// Gateway Initialization
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 
@@ -49,14 +51,24 @@ const placeOrder = async (req, res) => {
   }
 };
 
-// Placing orders using Stripe Method (Placeholder for future gateway integration)
+// Placing orders using Stripe Checkout Method
 const placeOrderStripe = async (req, res) => {
   try {
-    // these values are sent from the frontend when the user places an order
+    // userId is automatically injected by authUser middleware
     const { userId, items, amount, address } = req.body;
-    // here origin means the frontend url from where the request is coming, we will use it to redirect the user after payment
-    const { origin } = req.headers;
 
+    // Validate that required order information is provided
+    if (!items || !items.length) {
+      return res.json({ success: false, message: "Cart is empty" });
+    }
+    if (!address) {
+      return res.json({ success: false, message: "Delivery address is required" });
+    }
+
+    // Origin URL of the frontend to redirect user after Stripe payment
+    const origin = (req.headers.origin || req.get("origin") || "http://localhost:5173").replace(/\/+$/, "");
+
+    // 1. Create and save order in MongoDB with payment status as false
     const orderData = {
       userId,
       items,
@@ -70,32 +82,34 @@ const placeOrderStripe = async (req, res) => {
     const newOrder = new orderModel(orderData);
     await newOrder.save();
 
+    // 2. Format products into Stripe line items
     const line_items = items.map((item) => ({
       price_data: {
         currency: currency,
         product_data: {
           name: item.name,
         },
-        // Stripe expects the amount in cents, so we multiply by 100, if item.price is 10, it will be 1000 cents
-        unit_amount: item.price * 100,
+        // Stripe requires amount in cents, rounded to integer
+        unit_amount: Math.round(item.price * 100),
       },
       quantity: item.quantity,
     }));
 
-    // Adding delivery charges as a separate line item in the Stripe checkout session
-    line_items.push({
-      price_data: {
-        currency: currency,
-        product_data: {
-          name: "Delivery Charges",
+    // 3. Add delivery charge as a separate line item if applicable
+    if (deliveryCharge > 0) {
+      line_items.push({
+        price_data: {
+          currency: currency,
+          product_data: {
+            name: "Delivery Charges",
+          },
+          unit_amount: Math.round(deliveryCharge * 100),
         },
-        // here 100 means dollar to cents conversion, so if deliveryCharge is 10, it will be 1000 cents
-        unit_amount: deliveryCharge * 100,
-      },
-      quantity: 1
-    });
+        quantity: 1,
+      });
+    }
 
-    // Create a Stripe checkout session with the order details and redirect URLs, so that after payment, the user can be redirected to the appropriate page
+    // 4. Create Stripe Checkout session with success and cancel redirect URLs
     const session = await stripe.checkout.sessions.create({
       success_url: `${origin}/verify?success=true&orderId=${newOrder._id}`,
       cancel_url: `${origin}/verify?success=false&orderId=${newOrder._id}`,
@@ -103,42 +117,56 @@ const placeOrderStripe = async (req, res) => {
       mode: "payment",
     });
 
+    // 5. Send back session URL so frontend can redirect the user
     res.json({
       success: true,
       session_url: session.url,
     });
-
-
   } catch (error) {
-    console.log(error);
+    console.error("Error in placeOrderStripe:", error);
     res.json({ success: false, message: error.message });
   }
 };
 
-// Verify Stripe
+// Verify Stripe Payment
+// Called by frontend /verify page when redirected back from Stripe Checkout
 const verifyStripe = async (req, res) => {
+  const { orderId, success, userId } = req.body;
 
-    const { orderId, success, userId } = req.body
-
-    try {
-        if (success === "true") {
-            await orderModel.findByIdAndUpdate(orderId, { payment: true });
-            await userModel.findByIdAndUpdate(userId, { cartData: {} })
-
-            res.json({ success: true });
-
-        } else {
-            await orderModel.findByIdAndDelete(orderId)
-
-            res.json({ success: false })
-        }
-
-    } catch (error) {
-        console.log(error)
-        res.json({ success: false, message: error.message })
+  try {
+    // Validate order existence
+    const order = await orderModel.findById(orderId);
+    if (!order) {
+      return res.json({ success: false, message: "Order not found" });
     }
 
-}
+    // Security check: ensure order belongs to the authenticated user
+    if (order.userId.toString() !== userId.toString()) {
+      return res.json({ success: false, message: "Unauthorized access to order" });
+    }
+
+    // Check if Stripe payment was successful (supports string "true" or boolean true)
+    const isSuccess = success === "true" || success === true;
+
+    if (isSuccess) {
+      // 1. Mark order payment as completed
+      await orderModel.findByIdAndUpdate(orderId, { payment: true });
+
+      // 2. Clear user cart in MongoDB
+      await userModel.findByIdAndUpdate(userId, { cartData: {} });
+
+      res.json({ success: true, message: "Payment verified successfully" });
+    } else {
+      // If payment failed or was cancelled, remove the unpaid pending order
+      await orderModel.findByIdAndDelete(orderId);
+
+      res.json({ success: false, message: "Payment cancelled or failed" });
+    }
+  } catch (error) {
+    console.error("Error in verifyStripe:", error);
+    res.json({ success: false, message: error.message });
+  }
+};
 
 // Placing orders using Razorpay Method (Placeholder for future gateway integration)
 const placeOrderRazorpay = async (req, res) => {};
