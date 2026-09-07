@@ -90,11 +90,28 @@ export default function Checkout() {
         } else {
           toast.error(response.data.message || 'Failed to place order')
         }
-      } else {
-        // Stripe and Razorpay payment gateways (not yet configured in backend)
-        toast.info(
-          `${payment === 'stripe' ? 'Stripe' : 'Razorpay'} payment gateway is not yet available. Please select Cash on Delivery.`,
+      } else if (payment === 'stripe') {
+        // Stripe Online Payment Method
+        const response = await axios.post(
+          `${backendUrl}/api/order/stripe`,
+          {
+            items: orderItems,
+            amount: totalAmount,
+            address: form,
+          },
+          { headers: { token } },
         )
+
+        if (response.data.success) {
+          const { session_url } = response.data
+          // Redirect customer to Stripe Checkout session
+          window.location.replace(session_url)
+        } else {
+          toast.error(response.data.message || 'Failed to initialize Stripe payment')
+        }
+      } else {
+        // Razorpay payment gateway (placeholder)
+        toast.info('Razorpay payment gateway is not yet available. Please select Cash on Delivery or Stripe.')
       }
     } catch (error) {
       console.error('Error placing order:', error)

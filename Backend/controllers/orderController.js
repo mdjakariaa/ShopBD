@@ -1,5 +1,17 @@
+import "dotenv/config";
 import orderModel from "../models/orderModel.js";
 import userModel from "../models/userModel.js";
+import Stripe from "stripe";
+
+
+// Global variables
+// Note: Currency matches the storefront ($ = USD)
+const currency = (process.env.CURRENCY || "usd").toLowerCase();
+const deliveryCharge = 10;
+
+// Gateway Initialization
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
 
 // Placing orders using Cash On Delivery (COD) Method
 const placeOrder = async (req, res) => {
@@ -39,8 +51,122 @@ const placeOrder = async (req, res) => {
   }
 };
 
-// Placing orders using Stripe Method (Placeholder for future gateway integration)
-const placeOrderStripe = async (req, res) => {};
+// Placing orders using Stripe Checkout Method
+const placeOrderStripe = async (req, res) => {
+  try {
+    // userId is automatically injected by authUser middleware
+    const { userId, items, amount, address } = req.body;
+
+    // Validate that required order information is provided
+    if (!items || !items.length) {
+      return res.json({ success: false, message: "Cart is empty" });
+    }
+    if (!address) {
+      return res.json({ success: false, message: "Delivery address is required" });
+    }
+
+    // Origin URL of the frontend to redirect user after Stripe payment
+    const origin = (req.headers.origin || req.get("origin") || "http://localhost:5173").replace(/\/+$/, "");
+
+    // 1. Create and save order in MongoDB with payment status as false
+    const orderData = {
+      userId,
+      items,
+      address,
+      amount,
+      paymentMethod: "Stripe",
+      payment: false,
+      date: Date.now(),
+    };
+
+    const newOrder = new orderModel(orderData);
+    await newOrder.save();
+
+    // 2. Format products into Stripe line items
+    const line_items = items.map((item) => ({
+      price_data: {
+        currency: currency,
+        product_data: {
+          name: item.name,
+        },
+        // Stripe requires amount in cents, rounded to integer
+        unit_amount: Math.round(item.price * 100),
+      },
+      quantity: item.quantity,
+    }));
+
+    // 3. Add delivery charge as a separate line item if applicable
+    if (deliveryCharge > 0) {
+      line_items.push({
+        price_data: {
+          currency: currency,
+          product_data: {
+            name: "Delivery Charges",
+          },
+          unit_amount: Math.round(deliveryCharge * 100),
+        },
+        quantity: 1,
+      });
+    }
+
+    // 4. Create Stripe Checkout session with success and cancel redirect URLs
+    const session = await stripe.checkout.sessions.create({
+      success_url: `${origin}/verify?success=true&orderId=${newOrder._id}`,
+      cancel_url: `${origin}/verify?success=false&orderId=${newOrder._id}`,
+      line_items,
+      mode: "payment",
+    });
+
+    // 5. Send back session URL so frontend can redirect the user
+    res.json({
+      success: true,
+      session_url: session.url,
+    });
+  } catch (error) {
+    console.error("Error in placeOrderStripe:", error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+// Verify Stripe Payment
+// Called by frontend /verify page when redirected back from Stripe Checkout
+const verifyStripe = async (req, res) => {
+  const { orderId, success, userId } = req.body;
+
+  try {
+    // Validate order existence
+    const order = await orderModel.findById(orderId);
+    if (!order) {
+      return res.json({ success: false, message: "Order not found" });
+    }
+
+    // Security check: ensure order belongs to the authenticated user
+    if (order.userId.toString() !== userId.toString()) {
+      return res.json({ success: false, message: "Unauthorized access to order" });
+    }
+
+    // Check if Stripe payment was successful (supports string "true" or boolean true)
+    const isSuccess = success === "true" || success === true;
+
+    if (isSuccess) {
+      // 1. Mark order payment as completed
+      await orderModel.findByIdAndUpdate(orderId, { payment: true });
+
+      // 2. Clear user cart in MongoDB
+      await userModel.findByIdAndUpdate(userId, { cartData: {} });
+
+      res.json({ success: true, message: "Payment verified successfully" });
+    } else {
+      // If payment failed or was cancelled, remove the unpaid pending order
+      await orderModel.findByIdAndDelete(orderId);
+
+      res.json({ success: false, message: "Payment cancelled or failed" });
+    }
+  } catch (error) {
+    console.error("Error in verifyStripe:", error);
+    res.json({ success: false, message: error.message });
+  }
+};
 
 // Placing orders using Razorpay Method (Placeholder for future gateway integration)
 const placeOrderRazorpay = async (req, res) => {};
@@ -86,4 +212,4 @@ const updateStatus = async (req, res) => {
   }
 };
 
-export { placeOrder, placeOrderStripe, placeOrderRazorpay, allOrders, userOrders, updateStatus };
+export { placeOrder, placeOrderStripe, placeOrderRazorpay, allOrders, userOrders, updateStatus, verifyStripe };

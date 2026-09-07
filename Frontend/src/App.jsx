@@ -11,6 +11,7 @@ import About from './pages/About'
 import Contact from './pages/Contact'
 import Auth from './pages/Auth'
 import NotFound from './pages/NotFound'
+import Verify from './pages/Verify'
 
 export default function App() {
   return (
@@ -27,8 +28,9 @@ export default function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Auth mode="login" />} />
         <Route path="/signup" element={<Auth mode="signup" />} />
+        <Route path="/verify" element={<Verify />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>
-  )
+  );
 }

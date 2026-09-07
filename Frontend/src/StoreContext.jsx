@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 
-const StoreContext = createContext(null)
+export const StoreContext = createContext(null)
 
 export const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'
 export const currency = '$'
