@@ -29,5 +29,7 @@ app.get("/", (req, res) => {
 });
 
 // listen
-app.listen(port, () => console.log(`Listening on localhost:${port}`));
+if (process.env.VERCEL !== "1") {
+  app.listen(port, () => console.log(`Listening on localhost:${port}`));
+}
 export default app;

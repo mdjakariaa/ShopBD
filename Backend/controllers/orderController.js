@@ -10,7 +10,7 @@ const currency = (process.env.CURRENCY || "usd").toLowerCase();
 const deliveryCharge = 10;
 
 // Gateway Initialization
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
 
 // Placing orders using Cash On Delivery (COD) Method
@@ -54,6 +54,10 @@ const placeOrder = async (req, res) => {
 // Placing orders using Stripe Checkout Method
 const placeOrderStripe = async (req, res) => {
   try {
+    if (!stripe) {
+      return res.json({ success: false, message: "Stripe is not configured" });
+    }
+
     // userId is automatically injected by authUser middleware
     const { userId, items, amount, address } = req.body;
 
